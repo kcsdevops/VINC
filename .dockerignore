@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# SpotiFlyer source (não necessário no container)
+SpotiFlyer/
+com/
+META-INF/
+
+# Documentação (opcional)
+*.md
+!README.md
+
+# Logs
+*.log
+
+# Downloads (serão montados como volume)
+downloads/

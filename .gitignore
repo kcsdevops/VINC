@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.code-workspace
+
+# App data
+downloads/
+com/
+cache/
+*.spotdl
+*.spotdl.csv
+*.spotdl.json
+*.part
+*.part-*
+*.temp
+*.tmp
+.artists_index.json
+.seq
+config.json
+
+# Build/Dist
+dist/
+build/
+*.spec
+installer/*.exe
+installer/*.msi
+installer/output/

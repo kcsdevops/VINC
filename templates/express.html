@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express Download - Ultra Rápido</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animação de fundo */
+        .bg-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff006e, #8338ec, #3a86ff);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            opacity: 0.15;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            max-width: 700px;
+            width: 90%;
+        }
+
+        .logo-express {
+            font-size: 72px;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 40px;
+        }
+
+        .express-input {
+            width: 100%;
+            padding: 25px;
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            color: #fff;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .express-input:focus {
+            outline: none;
+            border-color: #3a86ff;
+            box-shadow: 0 0 30px rgba(58, 134, 255, 0.5);
+        }
+
+        .express-btn {
+            width: 100%;
+            padding: 25px;
+            font-size: 22px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%);
+            border: none;
+            border-radius: 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 40px rgba(255, 0, 110, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .express-btn:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(255, 0, 110, 0.6);
+        }
+
+        .express-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .speed-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(58, 134, 255, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(58, 134, 255, 0.3);
+        }
+
+        .speed-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+
+        .speed-stat {
+            text-align: center;
+        }
+
+        .speed-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #3a86ff;
+        }
+
+        .speed-label {
+            font-size: 12px;
+            color: #8338ec;
+            margin-top: 5px;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-container.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff);
+            width: 0%;
+            transition: width 0.3s ease-out;
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(58, 134, 255, 0.6);
+        }
+
+        .progress-text {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .nav-back {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .nav-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 36px;
+            }
+
+            .logo-express {
+                font-size: 56px;
+            }
+
+            .speed-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <a href="/desktop" class="nav-back">← Voltar</a>
+
+    <div class="container">
+        <div class="logo-express">⚡</div>
+        <div class="title">EXPRESS DOWNLOAD</div>
+        <div class="subtitle">Cole, clique, pronto. Simples assim.</div>
+
+        <input 
+            type="text" 
+            id="urlInput" 
+            class="express-input"
+            placeholder="Cole a URL aqui..."
+            autocomplete="off"
+        >
+
+        <button class="express-btn" onclick="expressDownload()">
+            🚀 BAIXAR AGORA
+        </button>
+
+        <div class="speed-info">
+            <div style="color: #3a86ff; font-weight: bold; margin-bottom: 10px;">
+                ⚡ MODO EXPRESS ATIVADO
+            </div>
+            <div class="speed-stats">
+                <div class="speed-stat">
+                    <div class="speed-number">16x</div>
+                    <div class="speed-label">Fragmentos Paralelos</div>
+                </div>
+                <div class="speed-stat">
+                    <div class="speed-number">32</div>
+                    <div class="speed-label">Conexões</div>
+                </div>
+                <div class="speed-stat">
+                    <div class="speed-number">64MB</div>
+                    <div class="speed-label">Buffer</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div style="color: #fff; font-weight: bold; margin-bottom: 10px;">
+                📥 Baixando...
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-text" id="progressText">
+                Iniciando download...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let downloadInterval = null;
+
+        async function expressDownload() {
+            const urlInput = document.getElementById('urlInput');
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Por favor, cole uma URL');
+                return;
+            }
+
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.classList.add('show');
+
+            try {
+                // Analisar URL rapidamente
+                const analyzeResponse = await fetch('/api/smart-analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const analyzeData = await analyzeResponse.json();
+
+                if (!analyzeData.success || !analyzeData.videos || analyzeData.videos.length === 0) {
+                    alert('Erro ao analisar URL');
+                    progressContainer.classList.remove('show');
+                    return;
+                }
+
+                const video = analyzeData.videos[0];
+                const videoId = `express_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                // Iniciar download imediatamente na melhor qualidade
+                const downloadResponse = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: video.url,
+                        video_id: videoId,
+                        quality: 'best',
+                        audio_only: false
+                    })
+                });
+
+                const downloadData = await downloadResponse.json();
+
+                if (downloadData.success) {
+                    monitorProgress(videoId, video.title);
+                } else {
+                    alert(`Erro: ${downloadData.error}`);
+                    progressContainer.classList.remove('show');
+                }
+            } catch (error) {
+                alert(`Erro: ${error.message}`);
+                progressContainer.classList.remove('show');
+            }
+        }
+
+        function monitorProgress(videoId, title) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            downloadInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/download-status/${videoId}`);
+                    const status = await response.json();
+
+                    if (status.progress) {
+                        const percent = parseFloat(status.progress.percent) || 0;
+                        progressBar.style.width = percent + '%';
+                        progressText.textContent = `${percent.toFixed(1)}% - ${status.progress.speed || 'calculando...'} - ETA: ${status.progress.eta || 'calculando...'}`;
+                    }
+
+                    if (status.status === 'completed') {
+                        clearInterval(downloadInterval);
+                        progressBar.style.width = '100%';
+                        progressText.textContent = `✅ Download concluído: ${title}`;
+                        setTimeout(() => {
+                            document.getElementById('progressContainer').classList.remove('show');
+                            document.getElementById('urlInput').value = '';
+                        }, 3000);
+                    } else if (status.status === 'error') {
+                        clearInterval(downloadInterval);
+                        progressText.textContent = `❌ Erro: ${status.error}`;
+                    }
+                } catch (error) {
+                    console.error('Erro ao monitorar:', error);
+                }
+            }, 1000);
+        }
+
+        // Enter para baixar
+        document.getElementById('urlInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                expressDownload();
+            }
+        });
+    </script>
+</body>
+</html>

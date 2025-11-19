@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  downloader:
+    build: .
+    container_name: video-spotify-downloader
+    ports:
+      - "5002:5002"
+    volumes:
+      # Persist downloads outside container
+      - ./downloads:/app/downloads
+      # Mount templates for live editing
+      - ./templates:/app/templates
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

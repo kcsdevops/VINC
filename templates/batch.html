@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Download - Download em Lote</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .batch-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .batch-title {
+            font-size: 48px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .batch-subtitle {
+            font-size: 18px;
+            color: #aaa;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .url-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+
+        .url-textarea:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .batch-btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .batch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        .batch-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .batch-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #f5576c;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .queue-section {
+            display: none;
+        }
+
+        .queue-section.show {
+            display: block;
+        }
+
+        .queue-header {
+            font-size: 24px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .download-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .download-title {
+            font-weight: bold;
+            color: #fff;
+            flex: 1;
+        }
+
+        .download-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-downloading {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196f3;
+        }
+
+        .status-completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .progress-container {
+            margin-top: 10px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f093fb, #f5576c);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .batch-title {
+                font-size: 32px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .batch-btn {
+                min-width: 100%;
+            }
+
+            .nav-links {
+                flex-direction: column;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📦 Batch Downloader</div>
+        <div class="nav-links">
+            <a href="/">🏠 Início</a>
+            <a href="/desktop">💻 Desktop</a>
+            <a href="/express">⚡ Express</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="batch-header">
+            <div class="batch-title">DOWNLOAD EM LOTE</div>
+            <div class="batch-subtitle">Cole múltiplas URLs e baixe todas de uma vez</div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">Total na Fila</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="downloadingCount">0</div>
+                <div class="stat-label">Baixando</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedCount">0</div>
+                <div class="stat-label">Concluídos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="errorCount">0</div>
+                <div class="stat-label">Erros</div>
+            </div>
+        </div>
+
+        <div class="input-section">
+            <textarea 
+                id="urlsInput" 
+                class="url-textarea"
+                placeholder="Cole as URLs aqui (uma por linha):&#10;&#10;https://www.youtube.com/watch?v=...&#10;https://www.tiktok.com/@...&#10;https://www.instagram.com/reel/...&#10;https://twitter.com/...&#10;&#10;Suportamos múltiplas plataformas!"
+            ></textarea>
+
+            <div class="controls">
+                <button class="batch-btn" onclick="startBatchDownload()">
+                    🚀 INICIAR DOWNLOADS
+                </button>
+                <button class="batch-btn secondary" onclick="clearQueue()">
+                    🗑️ Limpar Fila
+                </button>
+                <button class="batch-btn secondary" onclick="clearTextarea()">
+                    ✖️ Limpar URLs
+                </button>
+            </div>
+        </div>
+
+        <div class="queue-section" id="queueSection">
+            <div class="queue-header">
+                📥 Fila de Downloads
+            </div>
+            <div id="queueContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let downloadQueue = [];
+        let activeDownloads = 0;
+        const MAX_CONCURRENT = 3;
+
+        function clearTextarea() {
+            document.getElementById('urlsInput').value = '';
+        }
+
+        function clearQueue() {
+            downloadQueue = [];
+            document.getElementById('queueContainer').innerHTML = '';
+            document.getElementById('queueSection').classList.remove('show');
+            updateStats();
+        }
+
+        async function startBatchDownload() {
+            const urlsText = document.getElementById('urlsInput').value.trim();
+            
+            if (!urlsText) {
+                alert('Por favor, cole pelo menos uma URL');
+                return;
+            }
+
+            const urls = urlsText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url && url.startsWith('http'));
+
+            if (urls.length === 0) {
+                alert('Nenhuma URL válida encontrada');
+                return;
+            }
+
+            document.getElementById('queueSection').classList.add('show');
+
+            for (const url of urls) {
+                const downloadId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const item = {
+                    id: downloadId,
+                    url: url,
+                    status: 'pending',
+                    progress: 0,
+                    title: 'Analisando...',
+                    speed: '',
+                    eta: ''
+                };
+
+                downloadQueue.push(item);
+                addDownloadToUI(item);
+            }
+
+            updateStats();
+            processQueue();
+        }
+
+        function addDownloadToUI(item) {
+            const container = document.getElementById('queueContainer');
+            const div = document.createElement('div');
+            div.className = 'download-item';
+            div.id = `item-${item.id}`;
+            div.innerHTML = `
+                <div class="download-header">
+                    <div class="download-title">${item.url}</div>
+                    <div class="download-status status-${item.status}">${getStatusText(item.status)}</div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar" id="progress-${item.id}"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="info-${item.id}">Aguardando...</span>
+                        <span id="speed-${item.id}"></span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                pending: '⏳ Aguardando',
+                downloading: '📥 Baixando',
+                completed: '✅ Concluído',
+                error: '❌ Erro'
+            };
+            return texts[status] || status;
+        }
+
+        async function processQueue() {
+            while (downloadQueue.length > 0) {
+                const pendingItems = downloadQueue.filter(item => item.status === 'pending');
+                
+                if (pendingItems.length === 0) break;
+                if (activeDownloads >= MAX_CONCURRENT) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+
+                const item = pendingItems[0];
+                activeDownloads++;
+                downloadItem(item);
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        async function downloadItem(item) {
+            try {
+                updateItemStatus(item.id, 'downloading');
+
+                const analyzeResponse = await fetch('/api/smart-analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: item.url })
+                });
+
+                const analyzeData = await analyzeResponse.json();
+
+                if (!analyzeData.success || !analyzeData.videos || analyzeData.videos.length === 0) {
+                    throw new Error('Erro ao analisar URL');
+                }
+
+                const video = analyzeData.videos[0];
+                item.title = video.title;
+
+                updateItemInfo(item.id, `📹 ${video.title}`);
+
+                const downloadResponse = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: video.url,
+                        video_id: item.id,
+                        quality: 'best',
+                        audio_only: false
+                    })
+                });
+
+                const downloadData = await downloadResponse.json();
+
+                if (downloadData.success) {
+                    monitorDownload(item);
+                } else {
+                    throw new Error(downloadData.error || 'Erro ao iniciar download');
+                }
+            } catch (error) {
+                updateItemStatus(item.id, 'error');
+                updateItemInfo(item.id, `❌ ${error.message}`);
+                activeDownloads--;
+                processQueue();
+            }
+        }
+
+        function monitorDownload(item) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/download-status/${item.id}`);
+                    const status = await response.json();
+
+                    if (status.progress) {
+                        const percent = Number.parseFloat(status.progress.percent) || 0;
+                        item.progress = percent;
+                        
+                        document.getElementById(`progress-${item.id}`).style.width = percent + '%';
+                        document.getElementById(`info-${item.id}`).textContent = `${percent.toFixed(1)}%`;
+                        document.getElementById(`speed-${item.id}`).textContent = `${status.progress.speed || ''} - ETA: ${status.progress.eta || ''}`;
+                    }
+
+                    if (status.status === 'completed') {
+                        clearInterval(interval);
+                        updateItemStatus(item.id, 'completed');
+                        updateItemInfo(item.id, `✅ ${item.title}`);
+                        activeDownloads--;
+                        processQueue();
+                        updateStats();
+                    } else if (status.status === 'error') {
+                        clearInterval(interval);
+                        updateItemStatus(item.id, 'error');
+                        updateItemInfo(item.id, `❌ ${status.error}`);
+                        activeDownloads--;
+                        processQueue();
+                        updateStats();
+                    }
+                } catch (error) {
+                    clearInterval(interval);
+                    updateItemStatus(item.id, 'error');
+                    activeDownloads--;
+                    processQueue();
+                }
+            }, 1500);
+        }
+
+        function updateItemStatus(id, status) {
+            const item = downloadQueue.find(i => i.id === id);
+            if (item) item.status = status;
+
+            const statusElement = document.querySelector(`#item-${id} .download-status`);
+            if (statusElement) {
+                statusElement.className = `download-status status-${status}`;
+                statusElement.textContent = getStatusText(status);
+            }
+            updateStats();
+        }
+
+        function updateItemInfo(id, text) {
+            const titleElement = document.querySelector(`#item-${id} .download-title`);
+            if (titleElement) {
+                titleElement.textContent = text;
+            }
+        }
+
+        function updateStats() {
+            const total = downloadQueue.length;
+            const downloading = downloadQueue.filter(i => i.status === 'downloading').length;
+            const completed = downloadQueue.filter(i => i.status === 'completed').length;
+            const errors = downloadQueue.filter(i => i.status === 'error').length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('downloadingCount').textContent = downloading;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('errorCount').textContent = errors;
+        }
+    </script>
+</body>
+</html>
