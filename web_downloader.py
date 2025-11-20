@@ -1212,6 +1212,8 @@ def smart_analyze():
                 platform = 'Facebook'
             elif 'dailymotion' in extractor:
                 platform = 'Dailymotion'
+            elif 'xhamster' in extractor or 'xhamster' in url.lower():
+                platform = 'xHamster'
             else:
                 platform = info.get('extractor_key', 'Unknown')
             
