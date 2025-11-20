@@ -1,0 +1,47 @@
+{
+  "Settings": {
+    "AutoUpdate": true,
+    "LanguageSetting": "pt-BR",
+    "Theme": "auto",
+    "DownloadPath": "downloads",
+    "MaxConcurrentDownloads": 3,
+    "AutoRetry": true,
+    "MaxRetries": 3,
+    "NotificationsEnabled": true,
+    "AutoConvert": false,
+    "PreferredVideoQuality": "1080p",
+    "PreferredAudioFormat": "mp3",
+    "KeepOriginal": false
+  },
+  "DownloadHistory": {
+    "Records": [
+      {
+        "url": "https://youtube.com/watch?v=test",
+        "title": "Vídeo de Teste",
+        "platform": "YouTube",
+        "status": "completed",
+        "size": 15728640,
+        "timestamp": "2025-11-20T01:57:18.934217"
+      }
+    ],
+    "LastCleanup": null,
+    "MaxHistoryDays": 30
+  },
+  "QuickAccess": {
+    "RecentUrls": [
+      "https://soundcloud.com/artist/track",
+      "https://youtube.com/watch?v=example"
+    ],
+    "FavoriteFolders": [],
+    "MaxRecentUrls": 10
+  },
+  "Performance": {
+    "UseHardwareAcceleration": true,
+    "MaxCacheSize": 1024,
+    "AutoCleanCache": true
+  },
+  "Privacy": {
+    "SaveHistory": true,
+    "AnonymousUsage": false
+  }
+}

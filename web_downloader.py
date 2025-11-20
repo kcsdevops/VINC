@@ -23,8 +23,11 @@ except ImportError:
     print("Execute: pip install yt-dlp")
     sys.exit(1)
 
-# Importa cache manager
+# Importa cache manager e novos módulos
 from spotify_cache import get_cache_manager
+from download_queue import download_queue, DownloadTask
+from settings_manager import SettingsManager
+from i18n_manager import I18nManager
 
 # Configura logging
 logging.basicConfig(
@@ -32,6 +35,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Inicializa managers
+settings_manager = SettingsManager()
+i18n = I18nManager(default_language='pt-br')
 
 # Função para verificar e instalar FFmpeg para spotdl
 def ensure_ffmpeg():
@@ -1219,9 +1226,11 @@ def smart_analyze():
             
             # Detectar se é conteúdo de áudio/música
             is_music = False
+            print(f"[DEBUG] Extracting categories and tags...")
             categories = info.get('categories') or []
             tags = info.get('tags') or []
             title = (info.get('title') or '').lower()
+            print(f"[DEBUG] Categories type: {type(categories)}, Tags type: {type(tags)}")
             
             if 'soundcloud' in extractor or 'spotify' in extractor:
                 is_music = True
@@ -1752,6 +1761,269 @@ def clean_spotify_cache():
             'success': False,
             'error': str(e)
         })
+
+
+# ==================== NOVAS ROTAS - SISTEMA DE FILA ====================
+
+@app.route('/api/queue/add', methods=['POST'])
+def api_queue_add():
+    """Adiciona URL à fila de downloads"""
+    try:
+        data = request.json
+        url = data.get('url', '').strip()
+        quality = data.get('quality', 'best')
+        format_type = data.get('format', 'mp4')
+        
+        if not url:
+            return jsonify({'success': False, 'error': 'URL não fornecida'})
+        
+        # Extrai informações básicas
+        info = smart_analyze(url)
+        if not info:
+            return jsonify({'success': False, 'error': 'Falha ao analisar URL'})
+        
+        # Detecta plataforma
+        platform = detect_platform(url)
+        
+        # Adiciona à fila
+        task_id = download_queue.add(
+            url=url,
+            title=info.get('title', 'Download'),
+            platform=platform,
+            quality=quality,
+            format=format_type,
+            thumbnail=info.get('thumbnail')
+        )
+        
+        # Salva no histórico do settings_manager
+        settings_manager.add_to_history(
+            url=url,
+            title=info.get('title', 'Download'),
+            platform=platform,
+            status='queued',
+            file_size=0
+        )
+        
+        return jsonify({
+            'success': True,
+            'task_id': task_id,
+            'message': i18n.get('download.analyzing')
+        })
+    
+    except Exception as e:
+        logger.error(f"Erro ao adicionar à fila: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/status', methods=['GET'])
+def api_queue_status():
+    """Retorna status completo da fila"""
+    try:
+        all_tasks = download_queue.get_all_tasks()
+        stats = download_queue.get_statistics()
+        
+        # Converte tarefas para dict
+        result = {
+            'queue': [task.to_dict() for task in all_tasks['queue']],
+            'active': [task.to_dict() for task in all_tasks['active']],
+            'completed': [task.to_dict() for task in all_tasks['completed']],
+            'failed': [task.to_dict() for task in all_tasks['failed']],
+            'paused': [task.to_dict() for task in all_tasks['paused']],
+            'statistics': stats
+        }
+        
+        return jsonify({'success': True, 'data': result})
+    
+    except Exception as e:
+        logger.error(f"Erro ao obter status da fila: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/pause/<task_id>', methods=['POST'])
+def api_queue_pause(task_id):
+    """Pausa um download"""
+    try:
+        download_queue.pause_task(task_id)
+        return jsonify({'success': True, 'message': i18n.get('download.pause')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/resume/<task_id>', methods=['POST'])
+def api_queue_resume(task_id):
+    """Resume um download"""
+    try:
+        download_queue.resume_task(task_id)
+        return jsonify({'success': True, 'message': i18n.get('download.resume')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/cancel/<task_id>', methods=['POST'])
+def api_queue_cancel(task_id):
+    """Cancela um download"""
+    try:
+        download_queue.cancel_task(task_id)
+        return jsonify({'success': True, 'message': i18n.get('download.cancel')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/retry/<task_id>', methods=['POST'])
+def api_queue_retry(task_id):
+    """Tenta novamente um download falhado"""
+    try:
+        download_queue.retry_task(task_id)
+        return jsonify({'success': True, 'message': i18n.get('download.retry')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/remove/<task_id>', methods=['POST'])
+def api_queue_remove(task_id):
+    """Remove um download da fila"""
+    try:
+        download_queue.remove_task(task_id)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/pause-all', methods=['POST'])
+def api_queue_pause_all():
+    """Pausa todos os downloads"""
+    try:
+        download_queue.pause_all()
+        return jsonify({'success': True, 'message': i18n.get('messages.allPaused', 'Todos pausados')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/resume-all', methods=['POST'])
+def api_queue_resume_all():
+    """Resume todos os downloads"""
+    try:
+        download_queue.resume_all()
+        return jsonify({'success': True, 'message': i18n.get('messages.allResumed', 'Todos retomados')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/cancel-all', methods=['POST'])
+def api_queue_cancel_all():
+    """Cancela todos os downloads"""
+    try:
+        download_queue.cancel_all()
+        return jsonify({'success': True, 'message': i18n.get('messages.allCanceled', 'Todos cancelados')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/retry-all', methods=['POST'])
+def api_queue_retry_all():
+    """Tenta novamente todos os downloads falhados"""
+    try:
+        download_queue.retry_all()
+        return jsonify({'success': True, 'message': i18n.get('messages.allRetried', 'Todos tentados novamente')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/clear-completed', methods=['POST'])
+def api_queue_clear_completed():
+    """Remove todos os downloads completados"""
+    try:
+        download_queue.clear_completed()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/queue/clear-all', methods=['POST'])
+def api_queue_clear_all():
+    """Limpa toda a fila (exceto downloads ativos)"""
+    try:
+        download_queue.clear_all()
+        return jsonify({'success': True, 'message': i18n.get('history.clearAll')})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/settings', methods=['GET'])
+def api_settings_get():
+    """Retorna configurações atuais"""
+    try:
+        return jsonify({
+            'success': True,
+            'settings': settings_manager.settings
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/settings', methods=['POST'])
+def api_settings_update():
+    """Atualiza configurações"""
+    try:
+        data = request.json
+        for key, value in data.items():
+            settings_manager.set(key, value)
+        
+        return jsonify({
+            'success': True,
+            'message': i18n.get('messages.settingsSaved')
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/statistics', methods=['GET'])
+def api_statistics():
+    """Retorna estatísticas de downloads"""
+    try:
+        stats = settings_manager.get_statistics()
+        queue_stats = download_queue.get_statistics()
+        
+        result = {
+            **stats,
+            'queue': queue_stats
+        }
+        
+        return jsonify({'success': True, 'data': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/i18n/<lang_code>', methods=['GET'])
+def api_i18n_switch(lang_code):
+    """Troca idioma da interface"""
+    try:
+        if i18n.switch_language(lang_code):
+            return jsonify({
+                'success': True,
+                'language': lang_code,
+                'strings': i18n.strings
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Idioma não disponível'
+            })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/i18n/strings', methods=['GET'])
+def api_i18n_strings():
+    """Retorna todas as strings do idioma atual"""
+    try:
+        return jsonify({
+            'success': True,
+            'language': i18n.current_language,
+            'strings': i18n.strings
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 def main():
