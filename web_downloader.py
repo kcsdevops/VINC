@@ -1236,7 +1236,7 @@ def smart_analyze():
             if 'entries' in info:
                 # Playlist, canal ou álbum
                 videos = []
-                for entry in info['entries']:
+                for entry in (info.get('entries') or []):
                     if entry:
                         duration = entry.get('duration', 0)
                         duration_str = f"{int(duration // 60)}:{int(duration % 60):02d}" if duration else "N/A"
