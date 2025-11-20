@@ -1219,15 +1219,15 @@ def smart_analyze():
             
             # Detectar se é conteúdo de áudio/música
             is_music = False
-            categories = info.get('categories', []) or []
-            tags = info.get('tags', []) or []
-            title = info.get('title', '').lower()
+            categories = info.get('categories') or []
+            tags = info.get('tags') or []
+            title = (info.get('title') or '').lower()
             
             if 'soundcloud' in extractor or 'spotify' in extractor:
                 is_music = True
-            elif any(cat and 'music' in str(cat).lower() for cat in categories):
+            elif categories and any(cat and 'music' in str(cat).lower() for cat in categories):
                 is_music = True
-            elif any(tag and 'music' in str(tag).lower() for tag in tags):
+            elif tags and any(tag and 'music' in str(tag).lower() for tag in tags):
                 is_music = True
             elif 'music' in title or 'audio' in title or 'song' in title:
                 is_music = True
